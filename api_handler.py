@@ -2,6 +2,11 @@ from flask import Flask, render_template, request
 from pymongo import MongoClient
 from util import es_helper
 import config
+
+from pyelasticsearch import ElasticSearch
+elastic = ElasticSearch(config.ELASTIC_URL)
+
+
 ## Dump the mongo result to the json
 #from bson import json_util
 
@@ -70,6 +75,44 @@ def list_flights(origin, dest, flight_date):
         nav_offsets=nav_offsets
     )
 
+@app.route('/flights/search')
+def search_flights():
+    # Search Parameters
+    critieria_list = ['Carrier', 'FlightDate', 'Origin', 'Dest', 'TailNum', 'FlightNum']
+    search_critieria = {}
+    for critieria in critieria_list:
+        if critieria in request.args:
+            search_critieria[critieria] = request.args.get(critieria)
+
+
+    start = request.args.get('start') or 0
+    start = int(start)
+    end = request.args.get('end') or config.RECORDS_PER_PAGE
+    end = int(end)
+
+    nav_offsets = es_helper.get_navigation_offsets(start, end, config.RECORDS_PER_PAGE)
+
+    query = es_helper.build_query()
+    query = es_helper.set_search_critieria(search_critieria, query)
+    query = es_helper.set_pagination(start, config.RECORDS_PER_PAGE, query)
+    query = es_helper.set_sorting(['FlightDate', 'DepTime', 'Carrier', 'FlightNum'], query)
+
+    results = elastic.search(query)
+    flights, flight_count = es_helper.process_search(results)
+
+    return render_template(
+        'search.html',
+        flights=flights,
+        flight_date=search_critieria['FlightDate'],
+        flight_count=search_critieria['FlightDate'],
+        nav_path=request.path,
+        nav_offsets=nav_offsets,
+        carrier=search_critieria['Carrier'],
+        origin=search_critieria['Origin'],
+        dest=search_critieria['Dest'],
+        tail_number=search_critieria['TailNum'],
+        flight_number=search_critieria['FlightNum']
+    )
 
 
 if __name__ == "__main__":

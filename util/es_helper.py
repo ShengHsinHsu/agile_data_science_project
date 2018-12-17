@@ -37,3 +37,37 @@ def strip_place(url):
     except AttributeError as e:
         return url
     return p
+
+def build_query():
+    query = {
+        'query': {
+            'bool': {
+                'must': []
+            }
+        },
+        'sort': ['_score']
+    }
+
+    return query
+
+def set_sorting(sorting_list, query):
+
+    for field in sorting_list:
+        sorting = {field : {'order': 'asc', 'ignore_unmapped': True}}
+        query['sort'].append(sorting)
+
+    return query
+
+def set_pagination(start, page_size, query):
+    query['from'] = start
+    query['size'] = page_size
+
+    return query
+
+def set_search_critieria(criteria_dict, query):
+
+    for c in criteria_dict:
+        dic = {'match': {c: criteria_dict[c]}}
+        query['query']['bool']['must'].append(dic)
+
+    return query
