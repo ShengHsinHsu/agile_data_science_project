@@ -1,7 +1,9 @@
 import re
 
+
 # Process Elasticsearch hits and return flight reocrds
 def process_search(results):
+
     records = []
 
     if results['hits'] and results['hits']['hits']:
@@ -13,6 +15,7 @@ def process_search(results):
             records.append(record)
 
     return records, total
+
 
 # Calculate offsets for fetching lists  of flights from MongoDB
 def get_navigation_offsets(start, end, size):
@@ -30,6 +33,7 @@ def get_navigation_offsets(start, end, size):
 
     return offsets
 
+
 # Strip the existing start and end parameters from the query string
 def strip_place(url):
     try:
@@ -37,6 +41,7 @@ def strip_place(url):
     except AttributeError as e:
         return url
     return p
+
 
 def build_query():
     query = {
@@ -50,6 +55,7 @@ def build_query():
 
     return query
 
+
 def set_sorting(sorting_list, query):
 
     for field in sorting_list:
@@ -58,11 +64,13 @@ def set_sorting(sorting_list, query):
 
     return query
 
+
 def set_pagination(start, page_size, query):
     query['from'] = start
     query['size'] = page_size
 
     return query
+
 
 def set_search_critieria(criteria_dict, query):
 

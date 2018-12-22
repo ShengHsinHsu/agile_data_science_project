@@ -14,4 +14,4 @@
       {% endif %}
     {% endfor -%}
   </div>
-  {% endmacro -%}
+{% endmacro %}
