@@ -173,5 +173,18 @@ def flights_per_airplane(tail_number):
     return render_template('flights_per_airplane.html', flights=flights, tail_number=tail_number)
 
 
+@app.route('/airline/<carrier_code>')
+def airline(carrier_code):
+    airline_airplanes = client.agile_data_science.airplanes_per_carrier.find_one({
+        'Carrier': carrier_code
+    })
+
+    return render_template(
+        'airlines.html',
+        airline_airplanes=airline_airplanes,
+        carrier_code=carrier_code
+    )
+
+
 if __name__ == "__main__":
     app.run(debug=True)

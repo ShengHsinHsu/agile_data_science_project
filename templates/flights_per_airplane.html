@@ -13,9 +13,11 @@
         <tbody>
             {% for flight in flights['Flights'] %}
             <tr>
-                <td>{{ flight[0] }}</td>
+                <td><a href="/airline/{{flight[0]}}">{{ flight[0] }}</a></td>
                 <td>{{ flight[1] }}</td>
-                <td>{{ flight[2] }}</td>
+                <td>
+                    <a href="/on_time_performance?Carrier={{flight[0]}}&FlightDate={{flight[1]}}&flightNum={{flight[2]}}">{{flight[2]}}</a>
+                </td>
                 <td>
                     <a href="/on_time_performance?Carrier={{flight[0]}}&FlightDate={{flight[1]}}&FlightNum={{flight[2]}}">{{flight[2]}}</a>
                 </td>
