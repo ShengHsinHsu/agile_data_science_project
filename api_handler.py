@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 from pymongo import MongoClient
-from util import es_helper
+from util import es_helper, request_helper
 import config
 from bson import json_util
 from pyelasticsearch import ElasticSearch
@@ -48,7 +48,7 @@ def list_flights(origin, dest, flight_date):
     start = request.args.get('start') or 0
     end = request.args.get('end') or 20
 
-    start = max(int(start) -1, 0)
+    start = max(int(start) - 1, 0)
     end = int(end)
     width = end - start
 
@@ -173,16 +173,62 @@ def flights_per_airplane(tail_number):
     return render_template('flights_per_airplane.html', flights=flights, tail_number=tail_number)
 
 
+# Controller: Fetch an airplane entity page
 @app.route('/airline/<carrier_code>')
 def airline(carrier_code):
     airline_airplanes = client.agile_data_science.airplanes_per_carrier.find_one({
         'Carrier': carrier_code
     })
+    airline_summary = client.agile_data_science.airlines.find_one({
+        'CarrierCode': carrier_code
+    })
+    print(airline_summary)
 
     return render_template(
         'airlines.html',
         airline_airplanes=airline_airplanes,
+        airline_summary=airline_summary,
         carrier_code=carrier_code
+    )
+
+
+@app.route("/")
+@app.route("/airlines")
+@app.route("/airlines/")
+def airlines():
+    airlines = client.agile_data_science.airplanes_per_carrier.find()
+    return render_template('all_airlines.html', airlines=airlines)
+
+
+@app.route("/airplanes")
+@app.route("/airplanes/")
+def airplanes():
+    # MongoDB data access
+    # mfr_chart = client.agile_data_science.manufacturer_totals.find_one()
+    # return render_template("all_airplanes.html", mfr_chart=mfr_chart)
+    start, end = request_helper.get_pagination(request)
+    args_dict = request_helper.get_search_confic_dic(request)
+    sorting_list = ['Owner', 'Manufacturer', 'ManufacturerYear', 'SerialYear']
+
+    query = es_helper.build_query()
+    query = es_helper.set_sorting(sorting_list, query)
+    query = es_helper.set_search_critieria(args_dict, query)
+    query = es_helper.set_pagination(start, end, query)
+    results = elastic.search(query)
+    airplanes, airplane_count = es_helper.process_search(results)
+
+    # Navigation Path and offset setup
+    nav_path = es_helper.strip_place(request.url)
+    nav_offsets = es_helper.get_navigation_offsets(start, end, config.RECORDS_PER_PAGE)
+
+    return render_template(
+        'all_airplanes.html',
+        search_config=config.search_config,
+        args=args_dict,
+        airplanes=airplanes,
+        airplane_count=airplane_count,
+        nav_path=nav_path,
+        nav_offsets=nav_offsets
     )
 
 
