@@ -1,4 +1,6 @@
-from ..config import search_config, RECORDS_PER_PAGE
+
+
+from config import search_config, RECORDS_PER_PAGE
 
 
 def get_search_confic_dic(request):

@@ -5,13 +5,13 @@ import re
 def process_search(results):
 
     records = []
-
     if results['hits'] and results['hits']['hits']:
         total = results['hits']['total']
         hits = results['hits']['hits']
 
         for hit in hits:
-            record = hit['__source']
+            print(hit)
+            record = hit['_source']
             records.append(record)
 
     return records, total
@@ -59,7 +59,7 @@ def build_query():
 def set_sorting(sorting_list, query):
 
     for field in sorting_list:
-        sorting = {field : {'order': 'asc', 'ignore_unmapped': True}}
+        sorting = {field : {'order': 'asc'}}
         query['sort'].append(sorting)
 
     return query

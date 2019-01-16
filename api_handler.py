@@ -2,11 +2,12 @@ from flask import Flask, render_template, request
 from pymongo import MongoClient
 from util import es_helper, request_helper
 import config
+import json
 from bson import json_util
-from pyelasticsearch import ElasticSearch
+from elasticsearch import Elasticsearch
 
 
-elastic = ElasticSearch(config.ELASTIC_URL)
+elastic = Elasticsearch(config.ELASTIC_URL)
 
 
 ## Dump the mongo result to the json
@@ -101,7 +102,7 @@ def search_flights():
     query = es_helper.set_pagination(start, config.RECORDS_PER_PAGE, query)
     query = es_helper.set_sorting(['FlightDate', 'DepTime', 'Carrier', 'FlightNum'], query)
 
-    results = elastic.search(query)
+    results = elastic.index(index="agile_data_science", doc_type='on_time_performance', body=query)
     flights, flight_count = es_helper.process_search(results)
 
     return render_template(
@@ -208,13 +209,14 @@ def airplanes():
     # return render_template("all_airplanes.html", mfr_chart=mfr_chart)
     start, end = request_helper.get_pagination(request)
     args_dict = request_helper.get_search_confic_dic(request)
-    sorting_list = ['Owner', 'Manufacturer', 'ManufacturerYear', 'SerialYear']
+    sorting_list = ['Owner', 'Manufacturer', 'ManufacturerYear', 'SerialNumber']
 
     query = es_helper.build_query()
     query = es_helper.set_sorting(sorting_list, query)
     query = es_helper.set_search_critieria(args_dict, query)
     query = es_helper.set_pagination(start, end, query)
-    results = elastic.search(query)
+    print(query)
+    results = elastic.search(index="agile_data_science_airplane", doc_type='airplane', body=query)
     airplanes, airplane_count = es_helper.process_search(results)
 
     # Navigation Path and offset setup
@@ -231,6 +233,12 @@ def airplanes():
         nav_offsets=nav_offsets
     )
 
+
+@app.route("/airplanes/chart/manufacturers.json")
+@app.route("/airplanes/chart/manufacturers.json")
+def airplane_manufacturers_chart():
+    mfr_chart = client.agile_data_science.airplane_manufacturer_totals.find_one()
+    return json.dumps(mfr_chart)
 
 if __name__ == "__main__":
     app.run(debug=True)
